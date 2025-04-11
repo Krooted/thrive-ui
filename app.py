@@ -38,7 +38,13 @@ analytics_page = st.Page(
     icon="📊",
 )
 
-pg = st.navigation(pages=[chat_bot_page, user_page, analytics_page])
+testing_page = st.Page(
+    page="views/testing.py",
+    title="LLM Testing",
+    icon="🧪",
+)
+
+pg = st.navigation(pages=[chat_bot_page, user_page, analytics_page, testing_page])
 
 check_authenticate()
 

@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from vanna.remote import VannaDefault
 import json
 import psycopg2
@@ -33,9 +34,13 @@ class MyVannaAnthropicChromaDB(ChromaDB_VectorStore, Anthropic_Chat):
 class MyVannaOllama(VannaDB_VectorStore, Ollama):
     def __init__(self, config=None):
         try:
-            print('Using Ollama and VannaDB')
+            model = st.secrets["ai_keys"]["ollama_model"]
+            if "llm" in st.session_state:
+                model = st.session_state.llm.removeprefix("ollama - ")
+            
+            print(f'Using Ollama({model}) and VannaDB')
             VannaDB_VectorStore.__init__(self, vanna_model=st.secrets["ai_keys"]["vanna_model"], vanna_api_key=st.secrets["ai_keys"]["vanna_api"], config=config)
-            Ollama.__init__(self, config={'model': st.secrets["ai_keys"]["ollama_model"]})
+            Ollama.__init__(self, config={'model': model})
         except Exception as e:
             print(f"Error Configuring MyVannaOllama: {e}")
 
@@ -67,17 +72,22 @@ def read_forbidden_from_json():
 forbidden_tables, forbidden_columns = read_forbidden_from_json()
 forbidden_tables_str = ", ".join(f"'{table}'" for table in forbidden_tables)
 
-@st.cache_resource(ttl=3600)
+# @st.cache_resource(ttl=3600) commented out for testing
 def setup_vanna():
     try:
-        if "ollama_host" in st.secrets.ai_keys and "ollama_model" in st.secrets.ai_keys:
+        llm = ""
+        if "llm" in st.session_state:
+            llm = st.session_state.llm
+        
+        print(f"====================={llm}=====================")
+        if "ollama"in llm and "ollama_host" in st.secrets.ai_keys and "ollama_model" in st.secrets.ai_keys:
             if "chroma_path" in st.secrets.rag_model:
                 vn = MyVannaOllamaChromaDB()
             elif "vanna_api" in st.secrets.ai_keys and "vanna_model" in st.secrets.ai_keys:
                 vn = MyVannaOllama()
             else:
                 raise ValueError("Missing ollama Configuration Values")
-        elif "anthropic_api" in st.secrets.ai_keys and "anthropic_model" in st.secrets.ai_keys:
+        elif llm == "anthropic" and "anthropic_api" in st.secrets.ai_keys and "anthropic_model" in st.secrets.ai_keys:
             if "chroma_path" in st.secrets.rag_model:
                 vn = MyVannaAnthropicChromaDB()
             elif "vanna_api" in st.secrets.ai_keys and "vanna_model" in st.secrets.ai_keys:
@@ -104,6 +114,7 @@ def setup_vanna():
 def generate_questions_cached():
     try:
         vn = setup_vanna()
+        print('generate questions')
         return vn.generate_questions()
     except Exception as e:
         st.error(f"Error generating questions: {e}")
@@ -114,7 +125,21 @@ def generate_sql_cached(question: str):
     try:
         vn = setup_vanna()
 
-        if "allow_llm_to_see_data" in st.secrets.security and bool(st.secrets.security["allow_llm_to_see_data"]) == True:
+        if "allow_llm_to_see_data" in st.secrets.security and (st.secrets.security["allow_llm_to_see_data"] == "True" or st.secrets.security["allow_llm_to_see_data"] == True):
+            print("Allowing LLM to see data")
+            return check_references(vn.generate_sql(question=question, allow_llm_to_see_data=True))
+        else:
+            print("NOT allowing LLM to see data")
+            return check_references(vn.generate_sql(question=question))
+    except Exception as e:
+        st.error(f"Error generating SQL: {e}")
+        print(e)
+
+#for testing
+def generate_sql(question: str):
+    try:
+        vn = setup_vanna()
+        if "allow_llm_to_see_data" in st.secrets.security and (st.secrets.security["allow_llm_to_see_data"] == "True" or st.secrets.security["allow_llm_to_see_data"] == True):
             print("Allowing LLM to see data")
             return check_references(vn.generate_sql(question=question, allow_llm_to_see_data=True))
         else:
@@ -133,6 +158,15 @@ def is_sql_valid_cached(sql: str):
         st.error(f"Error checking SQL validity: {e}")
         print(e)
 
+#for testing
+def is_sql_valid(sql: str):
+    try:
+        vn = setup_vanna()
+        return vn.is_sql_valid(sql=sql)
+    except Exception as e:
+        st.error(f"Error checking SQL validity: {e}")
+        print(e)
+
 @st.cache_data(show_spinner="Running SQL query ...")
 def run_sql_cached(sql: str):
     try:
@@ -141,6 +175,16 @@ def run_sql_cached(sql: str):
     except Exception as e:
         st.error(f"Error running SQL: {e}")
         print(e)
+
+#for testing
+def run_sql(sql: str):
+    try:
+        vn = setup_vanna()
+        return vn.run_sql(sql=sql)
+    except Exception as e:
+        st.error(f"Error running SQL: {e}")
+        print(e)
+        return pd.DataFrame() # force it to run
 
 @st.cache_data(show_spinner="Checking if we should generate a chart ...")
 def should_generate_chart_cached(question, sql, df):
