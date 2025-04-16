@@ -95,25 +95,41 @@ def test_all_questions():
         {
             "question": "what is the biggest penguin",
             "answer": "Gentoo penguin with a body mass of 6300 grams"
-        }
+        },
+        {
+            "question": "what is the most popular type of penguin?",
+            "answer": "Adelie penguin, with a species count of 152"
+        },
+        {
+            "question": "is there a correlation between bill length and body mass g amongst penguins?",
+            "answer": "correlation of 0.596407 between bill length and body mass"
+        },
+        {
+            "question": "how many penguins are on each island?",
+            "answer": "number of penguins on each island as follows: Dream Island has 124 penguins, Torgersen Island has 52 penguins, and Biscoe Island has 168 penguins"
+        },
+        {
+            "question": "what is the correlation between pclass and survival?",
+            "answer": "correlation between passenger class (pclass) and survival rate on the Titanic. Passengers in class 1 had a survival rate of approximately 62.96%, those in class 2 had a survival rate of about 47.28%, and passengers in class 3 had a survival rate of roughly 24.24%"
+        },
+        {
+            "question": "what was the age range for females on the titanic?",
+            "answer": "The age range for females on the Titanic was from 0.75 years to 62 years."
+        },
+        {
+            "question": "how much did each pclass ticket cost",
+            "answer": "the average ticket cost for each passenger class (pclass) on the Titanic. The average ticket costs are as follows: Class 1 (pclass 1) averaged $84.15, Class 2 (pclass 2) averaged $20.66, and Class 3 (pclass 3) averaged $13.68"
+        },
     ]
-    # questions = [
-    #     "how many males vs females were on the titanic",
-    #     "how many people perished on the titanic?",
-    #     "how did ticket price affect the survival rate?",
-    #     "what is the biggest penguin",
-    #     "How many people smoke?",
-    #     "how many people use tabacco",
-    #     "How many people are obese and have diabeties?"
-    # ]
 
     # Loop through LLMs
     llms = [
-        # "default",
+        "default",
         "anthropic",
         "ollama - llama3.2",
         "ollama - codellama",
-        "ollama - deepcoder"
+        "ollama - deepcoder",
+        "ollama - StarCoder",
     ]
 
     for question in questions:
