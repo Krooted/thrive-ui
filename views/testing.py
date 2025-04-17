@@ -124,12 +124,12 @@ def test_all_questions():
 
     # Loop through LLMs
     llms = [
-        "default",
-        "anthropic",
-        "ollama - llama3.2",
-        "ollama - codellama",
-        "ollama - deepcoder",
+        # "default",
+        # "anthropic",
         "ollama - StarCoder",
+        "ollama - codellama",
+        # "ollama - deepcoder",
+        "ollama - Qwen2.5-Coder",
     ]
 
     for question in questions:
